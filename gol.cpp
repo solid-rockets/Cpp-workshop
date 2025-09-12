@@ -64,7 +64,7 @@ void DrawBoard(char* board) {
   // TODO: use cell divider.
   for(int r = 0; r < HEIGHT; r++) {
     for(int c = 0; c < WIDTH; c++) {
-      auto p = r * WIDTH + c; // TODO: replace with CalcPos
+      auto p = CalcPos(c, r);
       auto color = Cell2Color(board[p]);
 
       auto posX = c * BLOCK_SIZE;
@@ -123,7 +123,7 @@ void UpdateSingleCell(char* board, int p) {
 void UpdateCells(char* board) {
   for(int r = 0; r < HEIGHT; r++) {
     for(int c = 0; c < WIDTH; c++) {
-      auto p = r * WIDTH + c; // TODO: replace with CalcPos
+      auto p = CalcPos(c, r);
 
       UpdateSingleCell(board, p);
     }
