@@ -5,6 +5,7 @@
 
 // TODO: allow user to change the speed of the simulation.
 #define INIT_TARGET_FPS 10
+#define CURSOR_DELAY 30
 
 #define BLOCK_PDNG  1
 #define BLOCK_SIZE 20
@@ -20,8 +21,21 @@ enum CELL { // TODO: document the flags better.
 
 
 // GLOBAL STATE
-bool isGameStopped = false;
-bool mustRandomize = false;
+bool isGameStopped  = false;
+bool mustRandomize  = false;
+bool mustToggleCell = false;
+
+typedef struct {
+  int x;
+  int y;
+  int delay; // Will show cursor for this many frames.
+} CURSOR;
+
+CURSOR cursor = { // Basically, a struct is syn. sugar for a variable prefix.
+  WIDTH  / 2,
+  HEIGHT / 2,
+  0
+};
 
 // LOGIC
 Color Cell2Color(int val) {
@@ -79,12 +93,56 @@ void DrawBoard(char* board) {
   }
 }
 
+void UpdateCursor(int dx, int dy) {
+  cursor.x += dx;
+  cursor.y += dy;
+
+  if(cursor.x < 0) cursor.x = 0;
+  if(cursor.y < 0) cursor.y = 0;
+  if(cursor.x >= WIDTH)  cursor.x = WIDTH  - 1;
+  if(cursor.y >= HEIGHT) cursor.y = HEIGHT - 1;
+
+  cursor.delay = CURSOR_DELAY;
+}
+
+void ToggleCell(char* board) {
+  auto p = CalcPos(cursor.x, cursor.y);
+
+  board[p] = CELL::ALIVE;
+  mustToggleCell = false;
+
+  cursor.delay = CURSOR_DELAY;
+}
+
+void DrawCursor() {
+  if(!cursor.delay) return;
+  // TODO: make it match the square within
+  DrawRectangleLines(
+    cursor.x * BLOCK_SIZE,
+    cursor.y * BLOCK_SIZE,
+    BLOCK_SIZE,
+    BLOCK_SIZE,
+    ORANGE
+  );
+}
+
 void ProcessInputs() {
+  // TODO: use a swich
+  if(IsKeyPressed(KEY_W)) UpdateCursor( 0,-1);
+  if(IsKeyPressed(KEY_S)) UpdateCursor( 0, 1);
+  if(IsKeyPressed(KEY_A)) UpdateCursor(-1, 0);
+  if(IsKeyPressed(KEY_D)) UpdateCursor( 1, 0);
+
+  // TODO: implement a key for emptying the board
+
+  if(IsKeyPressed(KEY_ENTER))
+    mustToggleCell = true;
+
   if(IsKeyPressed(KEY_R))
     mustRandomize = true;
 
-  if(IsKeyPressed(KEY_S))
-    isGameStopped != isGameStopped;
+  if(IsKeyPressed(KEY_SPACE))
+    isGameStopped = !isGameStopped;
 }
 
 void UpdateSingleCell(char* board, int p) {
@@ -140,6 +198,10 @@ void AdvanceCells(char* board) {
     board[i] >>= 1; // NEXT state flows down to LIFE flag.
 }
 
+void UpdateMisc() {
+  if(cursor.delay > 0) cursor.delay--;
+}
+
 int main() {
   // Initialize all variables.
   srand(time(0));
@@ -155,16 +217,19 @@ int main() {
     BeginDrawing();
       ClearBackground(BLACK);
       DrawBoard(board);
+      DrawCursor();
     EndDrawing(); // This polls events automatically.
 
     ProcessInputs();
+    UpdateMisc();
 
-    // TODO: implement a curser
+    if(mustToggleCell)
+      ToggleCell(board);
+
+    if(mustRandomize)
+      RandomizeBoard(board);
 
     if(!isGameStopped) {
-      if(mustRandomize)
-        RandomizeBoard(board);
-
       UpdateCells(board);
       AdvanceCells(board);
     }
