@@ -6,8 +6,8 @@
 // TODO: allow user to change the speed of the simulation.
 #define INIT_TARGET_FPS 10
 
-#define BLOCK_DIV    1
-#define BLOCK_SIZE   20
+#define BLOCK_PDNG  1
+#define BLOCK_SIZE 20
 #define WIDTH  40
 #define HEIGHT 40
 
@@ -61,7 +61,6 @@ void RandomizeBoard(char* board) {
 }
 
 void DrawBoard(char* board) {
-  // TODO: use cell divider.
   for(int r = 0; r < HEIGHT; r++) {
     for(int c = 0; c < WIDTH; c++) {
       auto p = CalcPos(c, r);
@@ -70,7 +69,12 @@ void DrawBoard(char* board) {
       auto posX = c * BLOCK_SIZE;
       auto posY = r * BLOCK_SIZE;
 
-      DrawRectangle(posX, posY, BLOCK_SIZE, BLOCK_SIZE, color);
+      DrawRectangle(
+        posX + BLOCK_PDNG, // Block padding added.
+        posY + BLOCK_PDNG,
+        BLOCK_SIZE - BLOCK_PDNG * 2,
+        BLOCK_SIZE - BLOCK_PDNG * 2,
+        color);
     }
   }
 }
@@ -154,6 +158,8 @@ int main() {
     EndDrawing(); // This polls events automatically.
 
     ProcessInputs();
+
+    // TODO: implement a curser
 
     if(!isGameStopped) {
       if(mustRandomize)
