@@ -3,18 +3,19 @@
 #include <cstdlib>
 #include <ctime>
 
+// TODO: allow user to change the speed of the simulation.
 #define INIT_TARGET_FPS 10
 
 #define BLOCK_DIV    1
 #define BLOCK_SIZE   20
-#define BOARD_WIDTH  40
-#define BOARD_HEIGHT 40
+#define WIDTH  40
+#define HEIGHT 40
 
 // DEFINITIONS
-enum CELL {
+enum CELL { // TODO: document the flags better.
   EMPTY = 0,
   ALIVE = 1,
-  NEXT  = 3
+  NEXT  = 2  // This is a flag that must be set.
 };
 
 
@@ -32,12 +33,12 @@ Color Cell2Color(int val) {
 }
 
 int CalcPos(int c, int r) {
-  return r * BOARD_WIDTH + c;
+  return r * WIDTH + c;
 }
 
 void PopulateBoard(char* board) {
-  for(int r = 0; r < BOARD_HEIGHT; r++) {
-    for(int c = 0; c < BOARD_WIDTH; c++) {
+  for(int r = 0; r < HEIGHT; r++) {
+    for(int c = 0; c < WIDTH; c++) {
       auto p = CalcPos(c, r);
       board[p] = CELL::EMPTY;
     }
@@ -47,8 +48,8 @@ void PopulateBoard(char* board) {
 void RandomizeBoard(char* board) {
   mustRandomize = false;
 
-  for(int r = 0; r < BOARD_HEIGHT; r++) {
-    for(int c = 0; c < BOARD_WIDTH; c++) {
+  for(int r = 0; r < HEIGHT; r++) {
+    for(int c = 0; c < WIDTH; c++) {
       auto p = CalcPos(c, r);
 
       if(rand() % 2)
@@ -61,9 +62,9 @@ void RandomizeBoard(char* board) {
 
 void DrawBoard(char* board) {
   // TODO: use cell divider.
-  for(int r = 0; r < BOARD_HEIGHT; r++) {
-    for(int c = 0; c < BOARD_WIDTH; c++) {
-      auto p = r * BOARD_WIDTH + c;
+  for(int r = 0; r < HEIGHT; r++) {
+    for(int c = 0; c < WIDTH; c++) {
+      auto p = r * WIDTH + c; // TODO: replace with CalcPos
       auto color = Cell2Color(board[p]);
 
       auto posX = c * BLOCK_SIZE;
@@ -82,14 +83,67 @@ void ProcessInputs() {
     isGameStopped != isGameStopped;
 }
 
+void UpdateSingleCell(char* board, int p) {
+  int isL = p % WIDTH == 0;
+  int isR = p % WIDTH == WIDTH - 1;
+  int isU = p < WIDTH;
+  int isD = p > WIDTH * (HEIGHT - 1);
+
+  int count = 0;
+
+  // For reference:
+  // 123
+  // 4p5
+  // 678
+  // By using the mask 0x1 I check the actual state of being alive,
+  // while completely ignoring the NEXT flag's state.
+  // TODO: this will read from outside the board; use ternary ops! with a macro?
+  count += !isL & !isU & (board[p - WIDTH - 1] & 0x1); // Up-left corner check.
+  count +=        !isU & (board[p - WIDTH    ] & 0x1);
+  count += !isR & !isU & (board[p - WIDTH + 1] & 0x1);
+
+  count += !isL        & (board[p         - 1] & 0x1);
+  count += !isR        & (board[p         + 1] & 0x1);
+
+  count += !isL & !isD & (board[p + WIDTH - 1] & 0x1);
+  count +=        !isD & (board[p + WIDTH    ] & 0x1);
+  count += !isR & !isD & (board[p + WIDTH + 1] & 0x1); // Down-right corner.
+
+  auto cellVal = board[p];
+
+  if(cellVal == CELL::EMPTY) {
+    if(count == 3)
+      board[p] |= CELL::NEXT;
+  } else if(cellVal == CELL::ALIVE ) {
+    if(count == 2 || count == 3)
+      board[p] |= CELL::NEXT;
+  }
+}
+
+void UpdateCells(char* board) {
+  for(int r = 0; r < HEIGHT; r++) {
+    for(int c = 0; c < WIDTH; c++) {
+      auto p = r * WIDTH + c; // TODO: replace with CalcPos
+
+      UpdateSingleCell(board, p);
+    }
+  }
+}
+
+void AdvanceCells(char* board) {
+  auto totalSize = HEIGHT * WIDTH;
+  for(int i = 0; i < totalSize; i++)
+    board[i] >>= 1; // NEXT state flows down to LIFE flag.
+}
+
 int main() {
   // Initialize all variables.
   srand(time(0));
-  auto board = new char[BOARD_WIDTH * BOARD_HEIGHT];
+  auto board = new char[WIDTH * HEIGHT];
   PopulateBoard(board);
 
   // Proceed with drawing, etc.
-  InitWindow(BLOCK_SIZE * BOARD_WIDTH, BLOCK_SIZE * BOARD_HEIGHT, "snek");
+  InitWindow(BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT, "gol");
   SetTargetFPS(INIT_TARGET_FPS);
 
   // Game loop
@@ -102,8 +156,11 @@ int main() {
     ProcessInputs();
 
     if(!isGameStopped) {
-      // TODO: actually run the simulation
-      if(mustRandomize) RandomizeBoard(board);
+      if(mustRandomize)
+        RandomizeBoard(board);
+
+      UpdateCells(board);
+      AdvanceCells(board);
     }
   }
 
