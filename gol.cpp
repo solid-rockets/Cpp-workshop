@@ -107,7 +107,6 @@ void DrawBoard(char* board) {
 }
 
 void UpdateCursor(int dx, int dy) {
-  // TODO: do it for the mouse, too.
   cursor.x += dx;
   cursor.y += dy;
 
