@@ -119,10 +119,20 @@ void UpdateCursor(int dx, int dy) {
   cursor.delay = CURSOR_DELAY;
 }
 
+void UpdateCursorFromCoords() {
+  auto x = GetMouseX() / BLOCK_SIZE;
+  auto y = GetMouseY() / BLOCK_SIZE;
+
+  auto delta_x = x - cursor.x;
+  auto delta_y = y - cursor.y;
+
+  UpdateCursor(delta_x, delta_y);
+}
+
 void ToggleCell(char* board) {
   auto p = CalcPos(cursor.x, cursor.y);
 
-  board[p] = CELL::ALIVE;
+  board[p] = CELL::ALIVE; // TODO: implement toggle
   mustToggleCell = false;
 
   cursor.delay = CURSOR_DELAY;
@@ -154,6 +164,14 @@ void ProcessInputs() {
   CHECK_KEY(KEY_SPACE,
     isGameStopped = !isGameStopped;)
   #undef CHECK_KEY
+
+  // Mouse section.
+  auto mouseDelta = GetMouseDelta();
+  if(mouseDelta.x || mouseDelta.y) // both are floats, but should be 0.0
+    UpdateCursorFromCoords();
+
+  if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    mustToggleCell = true;
 }
 
 void UpdateSingleCell(char* board, int p) {
