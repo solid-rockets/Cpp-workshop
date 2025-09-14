@@ -131,7 +131,8 @@ void UpdateCursorFromCoords() {
 void ToggleCell(char* board) {
   auto p = CalcPos(cursor.x, cursor.y);
 
-  board[p] = CELL::ALIVE; // TODO: implement toggle
+  // CELL::ALIVE is actually a flag - use to filter specifically for that value.
+  board[p] = board[p] & CELL::ALIVE ? CELL::EMPTY : CELL::ALIVE;
   mustToggleCell = false;
 
   cursor.delay = CURSOR_DELAY;
