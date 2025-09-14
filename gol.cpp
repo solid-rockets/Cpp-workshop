@@ -23,6 +23,7 @@ enum CELL { // TODO: document the flags better.
 // GLOBAL STATE
 bool isGameStopped  = false;
 bool mustRandomize  = false;
+bool mustEmpty      = false;
 bool mustToggleCell = false;
 
 typedef struct {
@@ -74,6 +75,18 @@ void RandomizeBoard(char* board) {
   }
 }
 
+void EmptyBoard(char* board) {
+  mustEmpty = false;
+
+  for(int r = 0; r < HEIGHT; r++) {
+    for(int c = 0; c < WIDTH; c++) {
+      auto p = CalcPos(c, r);
+
+      board[p] = CELL::EMPTY;
+    }
+  }
+}
+
 void DrawBoard(char* board) {
   for(int r = 0; r < HEIGHT; r++) {
     for(int c = 0; c < WIDTH; c++) {
@@ -94,6 +107,7 @@ void DrawBoard(char* board) {
 }
 
 void UpdateCursor(int dx, int dy) {
+  // TODO: do it for the mouse, too.
   cursor.x += dx;
   cursor.y += dy;
 
@@ -133,13 +147,14 @@ void ProcessInputs() {
   if(IsKeyPressed(KEY_A)) UpdateCursor(-1, 0);
   if(IsKeyPressed(KEY_D)) UpdateCursor( 1, 0);
 
-  // TODO: implement a key for emptying the board
-
   if(IsKeyPressed(KEY_ENTER))
     mustToggleCell = true;
 
   if(IsKeyPressed(KEY_R))
     mustRandomize = true;
+
+  if(IsKeyPressed(KEY_E))
+    mustEmpty = true;
 
   if(IsKeyPressed(KEY_SPACE))
     isGameStopped = !isGameStopped;
@@ -228,6 +243,9 @@ int main() {
 
     if(mustRandomize)
       RandomizeBoard(board);
+
+    if(mustEmpty)
+      EmptyBoard(board);
 
     if(!isGameStopped) {
       UpdateCells(board);
