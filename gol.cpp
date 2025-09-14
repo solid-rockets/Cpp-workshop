@@ -13,10 +13,10 @@
 #define HEIGHT 40
 
 // DEFINITIONS
-enum CELL { // TODO: document the flags better.
+enum CELL {
   EMPTY = 0,
-  ALIVE = 1,
-  NEXT  = 2  // This is a flag that must be set.
+  ALIVE = 1, //
+  NEXT  = 2  // Gets shifted to alive flag on update.
 };
 
 
