@@ -141,23 +141,19 @@ void DrawCursor() {
 }
 
 void ProcessInputs() {
-  // TODO: use a swich
-  if(IsKeyPressed(KEY_W)) UpdateCursor( 0,-1);
-  if(IsKeyPressed(KEY_S)) UpdateCursor( 0, 1);
-  if(IsKeyPressed(KEY_A)) UpdateCursor(-1, 0);
-  if(IsKeyPressed(KEY_D)) UpdateCursor( 1, 0);
+  #define CHECK_KEY(key, action) if(IsKeyPressed(key)) action
+  CHECK_KEY(KEY_W, UpdateCursor( 0,-1);)
+  CHECK_KEY(KEY_S, UpdateCursor( 0, 1);)
+  CHECK_KEY(KEY_A, UpdateCursor(-1, 0);)
+  CHECK_KEY(KEY_D, UpdateCursor( 1, 0);)
 
-  if(IsKeyPressed(KEY_ENTER))
-    mustToggleCell = true;
+  CHECK_KEY(KEY_R, mustRandomize = true;)
+  CHECK_KEY(KEY_E, mustEmpty = true;)
 
-  if(IsKeyPressed(KEY_R))
-    mustRandomize = true;
-
-  if(IsKeyPressed(KEY_E))
-    mustEmpty = true;
-
-  if(IsKeyPressed(KEY_SPACE))
-    isGameStopped = !isGameStopped;
+  CHECK_KEY(KEY_ENTER, mustToggleCell = true;)
+  CHECK_KEY(KEY_SPACE,
+    isGameStopped = !isGameStopped;)
+  #undef CHECK_KEY
 }
 
 void UpdateSingleCell(char* board, int p) {
