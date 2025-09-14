@@ -140,8 +140,8 @@ void ToggleCell(char* board) {
 
 void DrawCursor() {
   if(!cursor.delay) return;
-  // TODO: make it match the square within
-  DrawRectangleLines(
+  // DrawRectangleLines makes the lines bigger than necessary.
+  DrawRectangle(
     cursor.x * BLOCK_SIZE,
     cursor.y * BLOCK_SIZE,
     BLOCK_SIZE,
@@ -245,8 +245,8 @@ int main() {
   while(!WindowShouldClose()) {
     BeginDrawing();
       ClearBackground(BLACK);
+      DrawCursor(); // Before board because of the cursor's DrawRectangle.
       DrawBoard(board);
-      DrawCursor();
     EndDrawing(); // This polls events automatically.
 
     ProcessInputs();
