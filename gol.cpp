@@ -197,19 +197,17 @@ void UpdateSingleCell(char* board, int p) {
   // 123
   // 4p5
   // 678
-  // By using the mask 0x1 I check the actual state of being alive,
-  // while completely ignoring the NEXT flag's state.
-  // TODO: this will read from outside the board; use ternary ops! with a macro?
-  count += !isL & !isU & (board[p - WIDTH - 1] & 0x1); // Up-left corner check.
-  count +=        !isU & (board[p - WIDTH    ] & 0x1);
-  count += !isR & !isU & (board[p - WIDTH + 1] & 0x1);
+  // NOTE: I could refactor using a macro, but using ifs is much more clear.
+  if(!isL && !isU) count +=  (board[p - WIDTH - 1] & CELL::ALIVE);
+  if(        !isU) count +=  (board[p - WIDTH    ] & CELL::ALIVE);
+  if(!isR && !isU) count +=  (board[p - WIDTH + 1] & CELL::ALIVE);
 
-  count += !isL        & (board[p         - 1] & 0x1);
-  count += !isR        & (board[p         + 1] & 0x1);
+  if(!isL        ) count +=  (board[p         - 1] & CELL::ALIVE);
+  if(!isR        ) count +=  (board[p         + 1] & CELL::ALIVE);
 
-  count += !isL & !isD & (board[p + WIDTH - 1] & 0x1);
-  count +=        !isD & (board[p + WIDTH    ] & 0x1);
-  count += !isR & !isD & (board[p + WIDTH + 1] & 0x1); // Down-right corner.
+  if(!isL && !isD) count +=  (board[p + WIDTH - 1] & CELL::ALIVE);
+  if(        !isD) count +=  (board[p + WIDTH    ] & CELL::ALIVE);
+  if(!isR && !isD) count +=  (board[p + WIDTH + 1] & CELL::ALIVE);
 
   auto cellVal = board[p];
 
