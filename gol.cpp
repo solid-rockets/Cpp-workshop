@@ -3,8 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 
-// TODO: allow user to change the speed of the simulation.
-#define INIT_TARGET_FPS 10
+#define INIT_TARGET_FPS 20
 #define CURSOR_DELAY 30
 
 #define BLOCK_PDNG  1
@@ -19,12 +18,12 @@ enum CELL {
   NEXT  = 2  // Gets shifted to alive flag on update.
 };
 
-
 // GLOBAL STATE
 bool isGameStopped  = false;
 bool mustRandomize  = false;
 bool mustEmpty      = false;
 bool mustToggleCell = false;
+auto fpsCounter     = INIT_TARGET_FPS;
 
 typedef struct {
   int x;
@@ -150,6 +149,15 @@ void DrawCursor() {
   );
 }
 
+void UpdateFPS(int diff) {
+  fpsCounter += diff;
+
+  if(fpsCounter < 1)
+    fpsCounter = 1;
+
+  SetTargetFPS(fpsCounter);
+}
+
 void ProcessInputs() {
   #define CHECK_KEY(key, action) if(IsKeyPressed(key)) action
   CHECK_KEY(KEY_W, UpdateCursor( 0,-1);)
@@ -163,6 +171,9 @@ void ProcessInputs() {
   CHECK_KEY(KEY_ENTER, mustToggleCell = true;)
   CHECK_KEY(KEY_SPACE,
     isGameStopped = !isGameStopped;)
+
+  CHECK_KEY(KEY_LEFT_BRACKET,  UpdateFPS(-1);)
+  CHECK_KEY(KEY_RIGHT_BRACKET, UpdateFPS(+1);)
   #undef CHECK_KEY
 
   // Mouse section.
@@ -239,7 +250,7 @@ int main() {
 
   // Proceed with drawing, etc.
   InitWindow(BLOCK_SIZE * WIDTH, BLOCK_SIZE * HEIGHT, "gol");
-  SetTargetFPS(INIT_TARGET_FPS);
+  SetTargetFPS(fpsCounter);
 
   // Game loop
   while(!WindowShouldClose()) {
