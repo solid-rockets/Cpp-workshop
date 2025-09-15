@@ -4,7 +4,7 @@ Feel free to dev or play, and enjoy your stay!
 
 -----
 COMMANDS I USE:
-g++ snek.cpp -lraylib
+g++ src/snek.cpp -lraylib
 
 -----
 
