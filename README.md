@@ -10,12 +10,15 @@ g++ snek.cpp -lraylib
 
 DONE
 - snek   : a simple snake implementation
+- gol    : Conway's game of life
 
 PLANNED
 - tetris : everyone knows this one!
-- gol    : Conway's game of life
 - saper  : minesweeper
+- gobang : line 'em up, but probably fewer stones than 5
 - reversi
-- shogi  : maybe with variants!
+- shogi  : maybe with variants! ...but that's a long term goal!
+- vector : a vector renderer
+- render : a more advanced, triangle renderer with depth
 
 ...and hopefully many more to come.
