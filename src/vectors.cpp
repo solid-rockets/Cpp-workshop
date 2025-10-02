@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 // DEFINITIONS
+#define newline() putchar('\n')
+
 typedef double VECTOR[ 4];
 typedef double MATRIX[16]; // Row-major order.
 
@@ -75,7 +77,7 @@ void printM(MATRIX a) {
   }
 }
 
-double* genRandM() {
+double* genBasicM() {
   auto arr = new double[16];
 
   for(auto i = 0; i < 16; i++)
@@ -86,18 +88,34 @@ double* genRandM() {
 
 int main() {
   // [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]^2
-  auto A = genRandM();
-  auto B = genRandM();
-  auto C = genRandM();
+  auto A = genBasicM();
+  auto B = genBasicM();
+  auto C = genBasicM();
+
+  VECTOR r = {1, 1, 0, 0};
+  VECTOR o = {0, 0, 0, 0};
 
   clearM(C);
 
+  printf("Matrix A\n");
   printM(A);
-  putchar('\n');
+  newline();
 
+  printf("Matrix B\n");
   printM(B);
-  putchar('\n');
+  newline();
 
+  printf("A * B\n");
   mulMM(A, B, C);
   printM(C);
+  newline();
+
+  printf("Vector r\n");
+  printV(r);
+  newline();
+
+  printf("A * r\n");
+  mulMV(A, r, o);
+  printV(o);
+  newline();
 }
