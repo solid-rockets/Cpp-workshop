@@ -2,10 +2,15 @@
 #include <math.h>
 #include <stdio.h>
 
+#define WIDTH  320
+#define HEIGHT 240
+#define TARGET_FPS 24
+#define SCALE 50
+
 // DEFINITIONS
 #define newline() putchar('\n')
 
-typedef double VECTOR[ 4];
+typedef double VECTOR[ 4]; // Making types for these was a mistake... use arrays
 typedef double MATRIX[16]; // Row-major order.
 
 // GLOBAL STATE
@@ -27,23 +32,24 @@ void mulMV(MATRIX m, VECTOR v, VECTOR o) {
   o[3] = dot(&m[12], v);
 }
 
-void transposeM(MATRIX m, MATRIX o) {
-  for(int r = 0; r < 4; r++) {
-    for(int c = 0; c < 4; c++) {
-      if(r != c) {
-        auto val = m[r * 4 + c];
-        o[c * 4 + r] = val;
-      }
-    }
-  }
-}
+// NOT TESTED / DEPRECATED
+//void transposeM(MATRIX m, MATRIX o) {
+//  for(int r = 0; r < 4; r++) {
+//    for(int c = 0; c < 4; c++) {
+//      if(r != c) {
+//        auto val = m[r * 4 + c];
+//        o[c * 4 + r] = val;
+//      }
+//    }
+//  }
+//}
 
 void clearM(MATRIX o) {
   for(int i = 0; i < 16; i++)
     o[i] = 0;
 }
 
-void initM(MATRIX o) {
+double* initM(MATRIX o) {
   for(int r = 0; r < 4; r++) {
     for(int c = 0; c < 4; c++) {
       if(r == c)
@@ -52,6 +58,15 @@ void initM(MATRIX o) {
         o[r * 4 + c] = 0;
     }
   }
+
+  return o;
+}
+
+double* copyM(MATRIX a, MATRIX b) {
+  for(int i = 0; i < 16; i++)
+    b[i] = a[i];
+
+  return b;
 }
 
 void mulMM(MATRIX a, MATRIX b, MATRIX o) {
@@ -77,13 +92,42 @@ void printM(MATRIX a) {
   }
 }
 
-double* genBasicM() {
-  auto arr = new double[16];
+double* genBasicM() { // TODO: bring a ptr from outside, don't generate new.
+  auto arr = new double[16]; // This is a bad idea - manual pointer mgmt sucks.
 
   for(auto i = 0; i < 16; i++)
     arr[i] = i * 1.0;
 
   return arr;
+}
+
+void drawLineFromVectors(MATRIX mat, VECTOR v1, VECTOR v2, Color color) {
+  double o1[4];
+  double o2[4];
+
+  mulMV(mat, v1, o1);
+  mulMV(mat, v2, o2);
+
+  DrawLine(o1[0], o1[1], o2[0], o2[1], color);
+}
+
+double* prepScaleM(MATRIX mat, int width, int height) {
+  initM(mat); // Pastes identity into matrix 1st; that way we can keep all dims.
+
+  mat[0] = width;
+  mat[5] = height;
+
+  return mat;
+}
+
+double* prepTransM(MATRIX mat, double x, double y, double z) {
+  initM(mat);
+
+  mat[3]  = x;
+  mat[7]  = y;
+  mat[11] = z;
+
+  return mat;
 }
 
 int main() {
@@ -118,4 +162,42 @@ int main() {
   mulMV(A, r, o);
   printV(o);
   newline();
+
+  // Let's get some display rolling here...
+  double heart_arr[8][4] = { // How would this be organized in memory?
+    { 0.0, 1.0, 0.0, 1.0},
+
+    {-1.0, 2.0, 0.0, 1.0},
+    {-2.0, 1.0, 0.0, 1.0},
+    {-2.0,-1.0, 0.0, 1.0},
+
+    { 0.0,-2.0, 0.0, 1.0},
+
+    { 2.0,-1.0, 0.0, 1.0},
+    { 2.0, 1.0, 0.0, 1.0},
+    { 1.0, 2.0, 0.0, 1.0},
+  };
+
+  InitWindow(WIDTH, HEIGHT, "snek");
+  SetTargetFPS(TARGET_FPS);
+
+  double emptyMats[4][16]; // Why not? Destruction managed automatically (stack)
+
+  while(!WindowShouldClose()) {
+    double* accMat   = initM(emptyMats[0]);
+    double* scaleMat = prepScaleM(emptyMats[1], SCALE, -SCALE);
+    double* transMat = prepTransM(emptyMats[2], WIDTH / 2, HEIGHT / 2, 0);
+
+    mulMM(transMat, scaleMat, accMat);
+
+    BeginDrawing();
+      ClearBackground(BLACK);
+      for(int i = 0; i < 8; i++)
+        drawLineFromVectors(
+          accMat,
+          heart_arr[i],
+          heart_arr[(i+1)%8],
+          GREEN);
+    EndDrawing();
+  }
 }
