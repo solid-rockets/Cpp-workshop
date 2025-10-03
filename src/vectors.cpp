@@ -5,7 +5,8 @@
 #define WIDTH  320
 #define HEIGHT 240
 #define TARGET_FPS 24
-#define SCALE 50
+#define SCALE 30
+#define DELTA_RAD 0.1
 
 // DEFINITIONS
 #define newline() putchar('\n')
@@ -32,17 +33,16 @@ void mulMV(MATRIX m, VECTOR v, VECTOR o) {
   o[3] = dot(&m[12], v);
 }
 
-// NOT TESTED / DEPRECATED
-//void transposeM(MATRIX m, MATRIX o) {
-//  for(int r = 0; r < 4; r++) {
-//    for(int c = 0; c < 4; c++) {
-//      if(r != c) {
-//        auto val = m[r * 4 + c];
-//        o[c * 4 + r] = val;
-//      }
-//    }
-//  }
-//}
+void transposeM(MATRIX m, MATRIX o) {
+  for(int r = 0; r < 4; r++) {
+    for(int c = 0; c < 4; c++) {
+      if(r != c) {
+        auto val = m[r * 4 + c];
+        o[c * 4 + r] = val;
+      }
+    }
+  }
+}
 
 void clearM(MATRIX o) {
   for(int i = 0; i < 16; i++)
@@ -70,14 +70,12 @@ double* copyM(MATRIX a, MATRIX b) {
 }
 
 void mulMM(MATRIX a, MATRIX b, MATRIX o) {
-  for(int c2 = 0; c2 < 4; c2++) {
-    for(int r = 0; r < 4; r++) {
-      for(int c = 0; c < 4; c++) {
-        auto v_a = a[r * 4 + c];
-        auto v_b = b[c * 4 + c2];
+  double t[16];
+  transposeM(b, t);
 
-        o[r * 4 + c2] += (v_a * v_b);
-      }
+  for(int c = 0; c < 4; c++) {
+    for(int r = 0; r < 4; r++) {
+      o[r*4 + c] = dot(&a[r*4], &b[c*4]);
     }
   }
 }
@@ -130,6 +128,17 @@ double* prepTransM(MATRIX mat, double x, double y, double z) {
   return mat;
 }
 
+double* prepRotY(MATRIX mat, double deg) {
+  initM(mat);
+
+  mat[0]  =  cos(deg);
+  mat[2]  =  sin(deg);
+  mat[8]  = -sin(deg);
+  mat[10] =  cos(deg);
+
+  return mat;
+}
+
 int main() {
   // [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]^2
   auto A = genBasicM();
@@ -169,11 +178,11 @@ int main() {
 
     {-1.0, 2.0, 0.0, 1.0},
     {-2.0, 1.0, 0.0, 1.0},
-    {-2.0,-1.0, 0.0, 1.0},
+    {-2.0, 0.0, 0.0, 1.0},
 
     { 0.0,-2.0, 0.0, 1.0},
 
-    { 2.0,-1.0, 0.0, 1.0},
+    { 2.0, 0.0, 0.0, 1.0},
     { 2.0, 1.0, 0.0, 1.0},
     { 1.0, 2.0, 0.0, 1.0},
   };
@@ -181,20 +190,23 @@ int main() {
   InitWindow(WIDTH, HEIGHT, "snek");
   SetTargetFPS(TARGET_FPS);
 
-  double emptyMats[4][16]; // Why not? Destruction managed automatically (stack)
+  double emptyMats[5][16]; // Why not? Destruction managed automatically (stack)
 
-  while(!WindowShouldClose()) {
-    double* accMat   = initM(emptyMats[0]);
-    double* scaleMat = prepScaleM(emptyMats[1], SCALE, -SCALE);
-    double* transMat = prepTransM(emptyMats[2], WIDTH / 2, HEIGHT / 2, 0);
+  for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) {
+    double* scaleMat = prepScaleM(emptyMats[0], SCALE, -SCALE);
+    double* transMat = prepTransM(emptyMats[1], WIDTH / 2, HEIGHT / 2, 0);
+    double* rotaMat  = prepRotY(emptyMats[2], d);
+    double* tempMat  = initM(emptyMats[3]);
+    double* resMat   = initM(emptyMats[4]);
 
-    mulMM(transMat, scaleMat, accMat);
+    mulMM(rotaMat, scaleMat, tempMat);
+    mulMM(transMat, tempMat, resMat);
 
     BeginDrawing();
       ClearBackground(BLACK);
       for(int i = 0; i < 8; i++)
         drawLineFromVectors(
-          accMat,
+          resMat,
           heart_arr[i],
           heart_arr[(i+1)%8],
           GREEN);
