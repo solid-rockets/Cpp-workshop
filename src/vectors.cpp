@@ -17,7 +17,7 @@
 #define MLEN (VLEN*3)
 
 typedef struct {
-  double* rotaMatrix; // Ptr, so calculate somewhere else.
+  double* rotaMatrix;    // Ptr, so calculate somewhere else.
   double translation[3]; // Initialize when creating struct.
   double scale[3];
   double depthFactor;
@@ -38,7 +38,6 @@ void mulMV(double* m, double* v, double* o) {
   for(int i = 0; i < VLEN; i++)
     o[i] = dot(&m[VLEN * i],  v);
 }
-
 
 void clearM(double* o) {
   for(int i = 0; i < MLEN; i++)
@@ -65,17 +64,21 @@ double* copyM(double* a, double* b) {
   return b;
 }
 
-// TODO: fix this
-//void mulMM(double* a, double* b, double* o) {
-//  double t[16];
-//  transposeM(b, t);
-//
-//  for(int c = 0; c < VLEN; c++) {
-//    for(int r = 0; r < VLEN; r++) {
-//      o[r*4 + c] = dot(&a[r*VLEN], &b[c*4]);
-//    }
-//  }
-//}
+void mulMM(double* a, double* b, double* o) {
+  for(int c = 0; c < VLEN; c++) {
+    double vb[VLEN] = {
+      b[c],
+      b[c+VLEN],
+      b[c+VLEN*2]
+    };
+
+    for(int r = 0; r < VLEN; r++) {
+      double* va = &a[r * VLEN];
+
+      o[r*VLEN + c] = dot(va, vb);
+    }
+  }
+}
 
 void printV(double* a) {
   printf("%f %f %f\n", a[0], a[1], a[2]);
@@ -85,15 +88,6 @@ void printM(double* a) {
   for(int i = 0; i < MLEN; i += VLEN) {
     printV(&a[i]);
   }
-}
-
-double* genBasicM() { // TODO: bring a ptr from outside, don't generate new.
-  auto arr = new double[MLEN]; // This is a bad idea - manual pointer mgmt sucks.
-
-  for(auto i = 0; i < MLEN; i++)
-    arr[i] = i * 1.0;
-
-  return arr;
 }
 
 void scaleVectorToScreen(double* v, double* s, double* o) {
@@ -119,33 +113,37 @@ void drawLineFromVectors
 
   translateVector(o1, state.translation, o1);
   translateVector(o2, state.translation, o2);
-//
-  printf("Vectors\n");
-  printV(v1);
-  printV(v2);
-  printV(o1);
-  printV(o2);
-  newline();
 
   // TODO: apply perspective.
 
   DrawLine(o1[0], o1[1], o2[0], o2[1], color);
 }
 
-double* prepRotY(double* mat, double deg) {
+double* prepRotY(double* mat, double rad) {
   initM(mat);
 
-  mat[0] =  cos(deg);
-  mat[2] =  sin(deg);
-  mat[6] = -sin(deg);
-  mat[8] =  cos(deg);
+  mat[0] =  cos(rad);
+  mat[2] =  sin(rad);
+  mat[6] = -sin(rad);
+  mat[8] =  cos(rad);
+
+  return mat;
+}
+
+double* prepRotX(double* mat, double rad) {
+  initM(mat);
+
+  mat[4] =  cos(rad);
+  mat[5] = -sin(rad);
+  mat[7] =  sin(rad);
+  mat[8] =  cos(rad);
 
   return mat;
 }
 
 int main() {
   // Let's get some display rolling here...
-  double heart_arr[8][VLEN] = { // How would this be organized in memory?
+  double heart_arr[8][VLEN] = {
     { 0.0, 1.0, 0.0},
 
     {-1.0, 2.0, 0.0},
@@ -159,22 +157,35 @@ int main() {
     { 1.0, 2.0, 0.0},
   };
 
-  InitWindow(WIDTH, HEIGHT, "snek");
+  InitWindow(WIDTH, HEIGHT, "vectors");
   SetTargetFPS(TARGET_FPS);
 
-  double emptyMats[5][MLEN]; // Why not? Destruction managed automatically (stack)
+  double emptyMats[5][MLEN]; // Destruction managed automatically (stack)
 
-  for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) { // TODO: d->angle
-    double* rotationM = initM(emptyMats[0]);
+  for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) {
+    double* rotaY  = initM(emptyMats[0]);
+    double* rotaX  = initM(emptyMats[1]);
+    double* accMat = initM(emptyMats[2]);
 
-    prepRotY(rotationM, d);
+    prepRotY(rotaY, d);
+    prepRotX(rotaX, PI/4);
 
-    printf("Rotation matrix\n");
-    printM(rotationM);
+    mulMM(rotaX, rotaY, accMat);
+
+    printf("Rotation Y\n");
+    printM(rotaY);
+    newline();
+
+    printf("Rotation X\n");
+    printM(rotaX);
+    newline();
+
+    printf("Acc mat\n");
+    printM(accMat);
     newline();
 
     RotationState state = {
-      rotationM,
+      accMat,
       {WIDTH/2, HEIGHT/2, 0},
       {SCALE, -SCALE, 0},
       0
