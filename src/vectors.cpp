@@ -68,6 +68,13 @@ double* copyM(double* a, double* b) {
 }
 
 void mulMM(double* a, double* b, double* o) {
+  // Allowing this function to have b == o is useful, and saves some memory,
+  // but ultimately all the copying to a temp matrix adds a lot of computational
+  // overhead not may overload smaller processors.
+  // Let me experiment with the concept of matrix stacks in the future.
+  double t[16];
+  forRange(i, 0, MLEN) t[i] = 0;
+
   forRange(c, 0, VLEN) {
     double vb[VLEN] = {
       b[c],
@@ -78,9 +85,11 @@ void mulMM(double* a, double* b, double* o) {
     forRange(r, 0, VLEN) {
       double* va = &a[r * VLEN];
 
-      o[r*VLEN + c] = dot(va, vb);
+      t[r*VLEN + c] = dot(va, vb);
     }
   }
+
+  forRange(i, 0, MLEN) o[i] = t[i];
 }
 
 void printV(double* a) {
@@ -196,22 +205,22 @@ int main() {
   SetTargetFPS(TARGET_FPS);
 
   double emptyMats[6][MLEN]; // Destruction managed automatically (stack)
+                             // NOTE: I can create a stack instead.
 
   for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) {
     double* rotaY  = initM(emptyMats[0]);
     double* rotaX  = initM(emptyMats[1]);
     double* globalY= initM(emptyMats[2]);
 
-    double* tempMat  = initM(emptyMats[3]); // TODO: refactor these
-    double* heartMat = initM(emptyMats[4]);
-    double* otherMat = initM(emptyMats[5]);
+    double* heartMat = initM(emptyMats[3]);
+    double* otherMat = initM(emptyMats[4]);
 
     prepRotY(rotaY, d);
     prepRotX(rotaX, PI/4);
     prepRotY(globalY, PI/4);
 
-    mulMM(rotaX,   rotaY,   tempMat);
-    mulMM(globalY, tempMat, heartMat);
+    mulMM(rotaX,   rotaY,   heartMat);
+    mulMM(globalY, heartMat, heartMat);
     mulMM(globalY, rotaX,   otherMat);
 
     RotationState state = {
