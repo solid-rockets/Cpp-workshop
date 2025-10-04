@@ -204,16 +204,17 @@ int main() {
   InitWindow(WIDTH, HEIGHT, "vectors");
   SetTargetFPS(TARGET_FPS);
 
-  double emptyMats[6][MLEN]; // Destruction managed automatically (stack)
-                             // NOTE: I can create a stack instead.
+  double emptyMats[6][MLEN];
 
   for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) {
-    double* rotaY  = initM(emptyMats[0]);
-    double* rotaX  = initM(emptyMats[1]);
-    double* globalY= initM(emptyMats[2]);
+    int top = 0; // Very basic stack
 
-    double* heartMat = initM(emptyMats[3]);
-    double* otherMat = initM(emptyMats[4]);
+    double* rotaY  = initM(emptyMats[top++]);
+    double* rotaX  = initM(emptyMats[top++]);
+    double* globalY= initM(emptyMats[top++]);
+
+    double* heartMat = initM(emptyMats[top++]);
+    double* otherMat = initM(emptyMats[top++]);
 
     prepRotY(rotaY, d);
     prepRotX(rotaX, PI/4);
