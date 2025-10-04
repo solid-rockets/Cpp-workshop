@@ -17,10 +17,13 @@
 #define MLEN (VLEN*3)
 
 typedef struct {
-  double* rotaMatrix;    // Ptr, so calculate somewhere else.
-  double translation[3]; // Initialize when creating struct.
-  double scale[3];
+  // Unit world
+  double* rotation;    // Ptr, so calculate somewhere else.
+  double position[3];    // Ptr, so calculate somewhere else.
   double depthFactor;
+
+  // Screen world
+  double screen[2];
 } RotationState;
 
 // GLOBAL STATE
@@ -90,12 +93,16 @@ void printM(double* a) {
   }
 }
 
-void scaleVectorToScreen(double* v, double* s, double* o) {
-  forRange(i, 0, 2)
-    o[i] = v[i] * s[i];
+void adjustToScreen(double* v, double* s, double* o) {
+  auto width  = s[0];
+  auto height = s[1];
+
+  // Same scale is to make things square, not rectangular.
+  o[0] = v[0] *  height + width/2;
+  o[1] = v[1] * -height + height/2; // NOTE: neg. y for vertical inversion
 }
 
-void translateVector(double* v, double* t, double* o) {
+void addVectors(double* v, double* t, double* o) {
   forRange(i, 0, VLEN)
     o[i] = v[i] + t[i];
 }
@@ -105,16 +112,15 @@ void drawLineFromVectors
   double o1[VLEN];
   double o2[VLEN];
 
-  mulMV(state.rotaMatrix, v1, o1);
-  mulMV(state.rotaMatrix, v2, o2);
+  // Unit world.
+  mulMV(state.rotation, v1, o1);
+  mulMV(state.rotation, v2, o2);
 
-  scaleVectorToScreen(o1, state.scale, o1);
-  scaleVectorToScreen(o2, state.scale, o2);
+  // TODO: fix perspective
 
-  translateVector(o1, state.translation, o1);
-  translateVector(o2, state.translation, o2);
-
-  // TODO: apply perspective.
+  // Screen world
+  adjustToScreen(o1, state.screen, o1);
+  adjustToScreen(o2, state.screen, o2);
 
   DrawLine(o1[0], o1[1], o2[0], o2[1], color);
 }
@@ -144,17 +150,17 @@ double* prepRotX(double* mat, double rad) {
 int main() {
   // Let's get some display rolling here...
   double heart_arr[8][VLEN] = {
-    { 0.0, 1.0, 0.0},
+    { .0,  .25, .0},
 
-    {-1.0, 2.0, 0.0},
-    {-2.0, 1.0, 0.0},
-    {-2.0, 0.0, 0.0},
+    {-.25, .5,  .0},
+    {-.5,  .25, .0},
+    {-.5,  .0,  .0},
 
-    { 0.0,-2.0, 0.0},
+    { .0, -.5,  .0},
 
-    { 2.0, 0.0, 0.0},
-    { 2.0, 1.0, 0.0},
-    { 1.0, 2.0, 0.0},
+    { .5,  .0,  .0},
+    { .5,  .25, .0},
+    { .25, .5,  .0},
   };
 
   InitWindow(WIDTH, HEIGHT, "vectors");
@@ -168,27 +174,15 @@ int main() {
     double* accMat = initM(emptyMats[2]);
 
     prepRotY(rotaY, d);
-    prepRotX(rotaX, PI/4);
+    prepRotX(rotaX, 0);
 
     mulMM(rotaX, rotaY, accMat);
 
-    printf("Rotation Y\n");
-    printM(rotaY);
-    newline();
-
-    printf("Rotation X\n");
-    printM(rotaX);
-    newline();
-
-    printf("Acc mat\n");
-    printM(accMat);
-    newline();
-
     RotationState state = {
       accMat,
-      {WIDTH/2, HEIGHT/2, 0},
-      {SCALE, -SCALE, 0},
-      0
+      {0, 0, -3},
+      0,
+      {WIDTH, HEIGHT}
     };
 
     BeginDrawing();
