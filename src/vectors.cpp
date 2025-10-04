@@ -107,6 +107,11 @@ void addVectors(double* v, double* t, double* o) {
     o[i] = v[i] + t[i];
 }
 
+void scaleVector(double* v, double s, double* o) {
+  forRange(i, 0, VLEN)
+    o[i] = v[i] * s;
+}
+
 void drawLineFromVectors
   (RotationState &state, double* v1, double* v2, Color color) {
   double o1[VLEN];
@@ -116,7 +121,11 @@ void drawLineFromVectors
   mulMV(state.rotation, v1, o1);
   mulMV(state.rotation, v2, o2);
 
-  // TODO: fix perspective
+  addVectors(o1, state.position, o1);
+  addVectors(o2, state.position, o2);
+
+  scaleVector(o1, state.depthFactor / abs(o1[2]), o1);
+  scaleVector(o2, state.depthFactor / abs(o2[2]), o2);
 
   // Screen world
   adjustToScreen(o1, state.screen, o1);
@@ -181,7 +190,7 @@ int main() {
     RotationState state = {
       accMat,
       {0, 0, -3},
-      0,
+      1,
       {WIDTH, HEIGHT}
     };
 
