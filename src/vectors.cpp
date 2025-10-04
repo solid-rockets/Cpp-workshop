@@ -196,20 +196,27 @@ int main() {
   InitWindow(WIDTH, HEIGHT, "vectors");
   SetTargetFPS(TARGET_FPS);
 
-  double emptyMats[5][MLEN]; // Destruction managed automatically (stack)
+  double emptyMats[6][MLEN]; // Destruction managed automatically (stack)
 
   for(double d = 0.0; !WindowShouldClose(); d += DELTA_RAD) {
     double* rotaY  = initM(emptyMats[0]);
     double* rotaX  = initM(emptyMats[1]);
-    double* accMat = initM(emptyMats[2]);
+    double* globalY= initM(emptyMats[2]);
+
+    double* tempMat  = initM(emptyMats[3]); // TODO: refactor these
+    double* heartMat = initM(emptyMats[4]);
+    double* otherMat = initM(emptyMats[5]);
 
     prepRotY(rotaY, d);
     prepRotX(rotaX, PI/4);
+    prepRotY(globalY, PI/4);
 
-    mulMM(rotaX, rotaY, accMat);
+    mulMM(rotaX,   rotaY,   tempMat);
+    mulMM(globalY, tempMat, heartMat);
+    mulMM(globalY, rotaX,   otherMat);
 
     RotationState state = {
-      accMat,
+      NULL,
       {0, 0, -1.25},
       1,
       {WIDTH, HEIGHT}
@@ -219,7 +226,7 @@ int main() {
       ClearBackground(BLACK);
 
       // Draw the arrows
-      state.rotation = rotaX;
+      state.rotation = otherMat;
       forRange(i, 1, 4)
         drawLineFromVectors(
           state,
@@ -229,7 +236,7 @@ int main() {
         );
 
       // Draw the heart.
-      state.rotation = accMat;
+      state.rotation = heartMat;
       forRange(i, 0, 8)
         drawLineFromVectors(
           state,
@@ -238,7 +245,7 @@ int main() {
           GREEN);
 
       // Draw the cube.
-      state.rotation = rotaX;
+      state.rotation = otherMat;
       forRange(i, 0, 4) // Front square
         drawLineFromVectors(
           state,
