@@ -38,18 +38,18 @@ double dot(double* v1, double* v2) {
 }
 
 void mulMV(double* m, double* v, double* o) {
-  for(int i = 0; i < VLEN; i++)
+  forRange(i, 0, VLEN)
     o[i] = dot(&m[VLEN * i],  v);
 }
 
 void clearM(double* o) {
-  for(int i = 0; i < MLEN; i++)
+  forRange(i, 0, MLEN)
     o[i] = 0;
 }
 
 double* initM(double* o) {
-  for(int r = 0; r < VLEN; r++) {
-    for(int c = 0; c < VLEN; c++) {
+  forRange(r, 0, VLEN) {
+    forRange(c, 0, VLEN) {
       if(r == c)
         o[r * VLEN + c] = 1;
       else
@@ -61,21 +61,21 @@ double* initM(double* o) {
 }
 
 double* copyM(double* a, double* b) {
-  for(int i = 0; i < MLEN; i++)
+  forRange(i, 0, MLEN)
     b[i] = a[i];
 
   return b;
 }
 
 void mulMM(double* a, double* b, double* o) {
-  for(int c = 0; c < VLEN; c++) {
+  forRange(c, 0, VLEN) {
     double vb[VLEN] = {
       b[c],
       b[c+VLEN],
       b[c+VLEN*2]
     };
 
-    for(int r = 0; r < VLEN; r++) {
+    forRange(r, 0, VLEN) {
       double* va = &a[r * VLEN];
 
       o[r*VLEN + c] = dot(va, vb);
@@ -88,9 +88,8 @@ void printV(double* a) {
 }
 
 void printM(double* a) {
-  for(int i = 0; i < MLEN; i += VLEN) {
+  forRange(i, 0, MLEN)
     printV(&a[i]);
-  }
 }
 
 void adjustToScreen(double* v, double* s, double* o) {
