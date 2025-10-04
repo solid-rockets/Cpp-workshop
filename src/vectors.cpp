@@ -172,6 +172,27 @@ int main() {
     { .25, .5,  .0},
   };
 
+  double arrows[4][VLEN] = {
+    { 0,  0,  0},
+    {.2,  0,  0},
+    { 0, .2,  0},
+    { 0,  0, .2}
+  };
+  Color colors[3] = { RED, GREEN, BLUE};
+
+  double cube[8][VLEN] = {
+    { .4, .4, 0},
+    {-.4, .4, 0},
+    {-.4,-.4, 0},
+    { .4,-.4, 0},
+
+    { .4, .4, -1},
+    {-.4, .4, -1},
+    {-.4,-.4, -1},
+    { .4,-.4, -1}
+   };
+
+
   InitWindow(WIDTH, HEIGHT, "vectors");
   SetTargetFPS(TARGET_FPS);
 
@@ -183,25 +204,63 @@ int main() {
     double* accMat = initM(emptyMats[2]);
 
     prepRotY(rotaY, d);
-    prepRotX(rotaX, 0);
+    prepRotX(rotaX, PI/4);
 
     mulMM(rotaX, rotaY, accMat);
 
     RotationState state = {
       accMat,
-      {0, 0, -3},
+      {0, 0, -1.25},
       1,
       {WIDTH, HEIGHT}
     };
 
     BeginDrawing();
       ClearBackground(BLACK);
-      for(int i = 0; i < 8; i++)
+
+      // Draw the arrows
+      state.rotation = rotaX;
+      forRange(i, 1, 4)
+        drawLineFromVectors(
+          state,
+          arrows[0],
+          arrows[i],
+          colors[i-1]
+        );
+
+      // Draw the heart.
+      state.rotation = accMat;
+      forRange(i, 0, 8)
         drawLineFromVectors(
           state,
           heart_arr[i],
           heart_arr[(i+1)%8],
           GREEN);
+
+      // Draw the cube.
+      state.rotation = rotaX;
+      forRange(i, 0, 4) // Front square
+        drawLineFromVectors(
+          state,
+          cube[i],
+          cube[(i+1)%4],
+          BLUE
+        );
+      forRange(i, 0, 4) // Front->back connecting lines
+        drawLineFromVectors(
+          state,
+          cube[i],
+          cube[i+4],
+          BLUE
+        );
+      forRange(i, 0, 4) // Back square
+        drawLineFromVectors(
+          state,
+          cube[4+i],
+          cube[4+(i+1)%4],
+          BLUE
+        );
+
     EndDrawing();
   }
 }
