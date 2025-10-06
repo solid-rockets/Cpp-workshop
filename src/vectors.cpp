@@ -9,21 +9,28 @@
 #define DELTA_RAD 0.1
 
 // DEFINITIONS
-// TODO: replace fors with forRange
 #define newline() putchar('\n')
 #define forRange(var, from, to) for(int var = 0; var < to; var++)
 
+// NOTE: originally, I was plannin to use typedef for defining the types of
+//       vectors and matrices but that proved to be unwieldy.
+// NOTE: please note that all matrices are row-major order: [[012],[234],[567]]
+//       stored in a single array: [0123456789] where each digit is an index.
 #define VLEN 3
 #define MLEN (VLEN*3)
 
 typedef struct {
-  // Unit world
-  double* rotation;    // Ptr, so calculate somewhere else.
-  double position[3];    // Ptr, so calculate somewhere else.
-  double depthFactor;
+  // Unit world - where all geometric action happens...
+  // 'rotation' and 'position' are enough for the case of this demo, but
+  // realistically are woefully insufficient for more complex graphics.
+  // A 4x4 matrix allows the program to keep track of rotation and translation
+  // in a single, convenient package (matrix).
+  double* rotation;    // 3x3 matrix
+  double  position[3];
+  double  depthFactor;
 
-  // Screen world
-  double screen[2];
+  // Screen world - ...before the vectors are scaled for display on the screen.
+  double screen[2]; // x & y components for scaling.
 } RotationState;
 
 // GLOBAL STATE
@@ -31,6 +38,7 @@ typedef struct {
 
 // LOGIC
 double dot(double* v1, double* v2) {
+  // Dot product.
   return
     v1[0] * v2[0] +
     v1[1] * v2[1] +
@@ -70,9 +78,10 @@ double* copyM(double* a, double* b) {
 void mulMM(double* a, double* b, double* o) {
   // Allowing this function to have b == o is useful, and saves some memory,
   // but ultimately all the copying to a temp matrix adds a lot of computational
-  // overhead not may overload smaller processors.
+  // overhead that overloads smaller processors... an 8086 needs every cycle.
+  //
   // Let me experiment with the concept of matrix stacks in the future.
-  double t[16];
+  double t[16]; // I can't reuse elsewhere because reclaimed on return (stack).
   forRange(i, 0, MLEN) t[i] = 0;
 
   forRange(c, 0, VLEN) {
@@ -220,9 +229,12 @@ int main() {
     prepRotX(rotaX, PI/4);
     prepRotY(globalY, PI/4);
 
-    mulMM(rotaX,   rotaY,   heartMat);
+    // NOTE: to understand why the code below works the way it does, it may be
+    //       best to refer to a textbook on graphics... a comment won't suffice.
+    //       But in summary:
+    mulMM(rotaX,   rotaY,    heartMat);
     mulMM(globalY, heartMat, heartMat);
-    mulMM(globalY, rotaX,   otherMat);
+    mulMM(globalY, rotaX,    otherMat);
 
     RotationState state = {
       NULL,
