@@ -6,7 +6,7 @@ a running program's memory.
 The only thing that differs between them is how the memory is allocated.
 
 Records are different - records can be viewed as "supervariables" which have
-individually accessible fields. In a sense, the are arrays, but are accessed
+individually accessible fields. In a sense, they are arrays, but are accessed
 like variables, not pointers.
 May be useful to use them in some capacity in the future.
 
