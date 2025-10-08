@@ -1,0 +1,19 @@
+Here are some comments I have for the folders listed in this directory:
+
+ 1) using immediate calls to draw a heart.
+ 2) converted the multi-argument immediate calls to functions using arrays instead.
+ 3) added a constant rotation around a Z-axis.
+ 4) using a vertex array to draw a heart.
+ 5) used "glDrawElements(...)".
+ 6) used "glMultiDrawElements(...)".
+ 7) play with Vertex Buffer Objects (PENDING)
+ 8) used frustum, rotated the heart, and added a plate under it.
+ 8a) small resolution.
+ 9) the heart now shows up in four separate panes.
+ 10) special function exists to setup the camera before drawings.
+ 11) displays multiple different view angles in the four panes.
+
+Some notes.
+
+ a) Use the following command: "gcc x/*.c -lGL -lglfw -lGLEW", and replace x
+    with the folder name.

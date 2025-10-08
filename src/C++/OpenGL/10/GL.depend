@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1607811046 source:/home/toy/Exocortex/Projects/All/OpenGL/10/heart.c
+	<GL/glew.h>
+	<GLFW/glfw3.h>
+	<stdio.h>
+	"main.h"
+
+1607811052 /home/toy/Exocortex/Projects/All/OpenGL/10/main.h
+
+1607811038 source:/home/toy/Exocortex/Projects/All/OpenGL/10/main.c
+	<GL/glew.h>
+	<GLFW/glfw3.h>
+	<stdio.h>
+	<unistd.h>
+	"main.h"
+
