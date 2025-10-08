@@ -1,0 +1,10 @@
+org 0x100  ; Program is loaded at this address.
+jmp main   ; Near jump, so by offset I suppose.
+
+msg: db "Hello, world!$"  ; The actual data.
+
+main:
+mov dx, msg
+mov ah, 09H
+int 21h  ; Write a string to console.
+int 20h  ; Close the program.

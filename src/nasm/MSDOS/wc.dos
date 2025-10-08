@@ -1,0 +1,48 @@
+;;; Print count of lines, words, and bytes in that order.
+
+;; Initialize all macros.
+%define EOF 0xFFFF
+%define BUF_SIZE 0x100
+
+%define STATE_WHITE 0x0
+%define STATE_CHAR  0x1
+%define STATE_END   0x2
+%define STATE_ERR   0x3
+
+;; Initialize all values.
+org 0x100
+jmp MAIN
+
+CHAR_BUF: times BUF_SIZE db 0x0
+CHAR_PTR: dw 0x0
+FILE_HDL: dw 0x0  ;; Denotes a file handle.
+
+;; Main and auxiliary routines.
+MAIN:
+    call GET_CHAR
+
+GET_CHAR:  ;; Returns char in AX. EOF is 0xFFFF
+    mov ax, [FILE_HDL]
+    cmp ax, 0x0
+    jnz .FILE_HANDLE_OK
+
+    ; Get the file handle if not open.
+
+
+    .FILE_HANDLE_OK:
+
+
+    ret
+
+;; Routines associated with the whitespace state.
+ACT_WHITE_STATE:
+
+CHANGE_STATE_TO_CHAR:
+
+;; Routines associated with the ASCII state.
+ACT_CHAR_STATE:
+
+CHANGE_STATE_TO_WHITE:
+
+;; Routine for finishing the program.
+ACT_END:

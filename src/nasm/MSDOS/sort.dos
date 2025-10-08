@@ -1,0 +1,57 @@
+org 0x100  ; Program is loaded at this address.
+jmp main   ; Near jump, so by offset.
+
+data: db "328826154548600988258740598725193746519298$"  ; The actual data.
+
+;; Initialize all registers.
+main:
+mov si, data
+mov di, data
+
+mov ax, 0x0
+mov bx, 0x0
+mov cx, 0x0
+mov dx, 0x0
+
+;; '[si]' and '[di]' will be swapped if '[di]' < '[si]'.
+outer_loop:
+mov al, [si]  ; Single byte should be moved here.
+mov di, si    ; Make sure both indexes point at the same mem. cell
+cmp al, '$'   ; in each major iteration.
+je finish     ; If 'al' contains an '$' char, then 'si' is pointing at the end.
+              ; In that case, finish execution.
+jmp inner_loop  ; Otherwise, continue to the inner loop.
+
+inc_di:
+mov cx, di
+add cx, 1
+mov di, cx
+
+inner_loop:
+mov bl, [di]
+cmp bl, '$'
+je end_of_str
+
+cmp al, bl  
+jl inc_di   ; Core line responsible for ordering the letters.
+
+;; Condition met -> bl < al.
+mov [si], bl  ; Move the smaller number to the start of the string.
+mov [di], al
+mov al, bl  ; Keep track of the smaller char in 'al' after moving the chars.
+jmp inc_di
+
+;; '[di]' encountered the '$' sign.
+;; Advance the 'si' index.
+end_of_str:
+mov ax, si
+add ax, 1
+mov si, ax
+jmp outer_loop
+
+;; This will write the sorted string to output.
+finish:  
+mov dx, data
+mov ah, 09H
+int 21h  ; Write a string to console.
+int 20h  ; Close the program.

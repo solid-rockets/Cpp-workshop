@@ -1,0 +1,5 @@
+Work on the following ideas:
+
+    wc  - word counter. Same as in Linux.
+    cal - console calendar.
+    ed  - simple line editor.

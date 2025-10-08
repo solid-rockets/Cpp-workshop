@@ -1,0 +1,138 @@
+%define CMD_NUM_ADDR 0x80
+%define CMD_BUF_ADDR 0x81
+
+%define FILE_BUF_SIZE 0x20
+
+%define CH_CR 0x0D
+%define CH_LF 0x0A
+%define CH_SP 0x20
+
+org 0x100  ; Program is loaded at this address.
+jmp main   ; Near jump, so by offset I suppose.
+
+file_error_msg: db "File couldn't be opened.", CH_LF, "Filename:", 0
+
+error_msg: db "An error occured.", 0
+
+const_fn: db " HELLO.TXT ", 0
+filename: times 0x80 db 0  ; Buffer for the filename.
+
+buffer:   times FILE_BUF_SIZE db 0    ; Buffer for data from the file.
+
+;; Here is where the program begins properly.
+main:
+mov si, CMD_BUF_ADDR
+;mov si, const_fn
+mov di, filename
+call rem_lead_spaces
+
+mov ax, 0x0
+
+mov ah, 0x3d
+mov al, 0x0
+mov dx, filename
+int 0x21
+
+jc handle_file_error
+
+;; File opened successfully.
+;; Proceed with reading the data into the buffer.
+mov bx, ax  ; Move the file handle into position.
+mov ax, 0x0
+
+mov ah, 0x3f
+mov cx, 32
+mov dx, buffer
+int 0x21
+
+jc handle_error
+
+; If no errors occur, the content obtained from the file can finally be written.
+mov ax, buffer
+call write_str
+
+jmp finish_exec
+
+;; If an error occurs when attempting to open file.
+handle_file_error:
+mov  ax, file_error_msg
+call write_str
+
+mov  ax, filename
+call write_str
+
+jmp  finish_exec
+
+;; If an error occurs, jump here.
+handle_error:
+mov  ax, error_msg
+call write_str
+jmp  finish_exec
+
+;; SUBROUTINE - finished execution.
+finish_exec:
+int 20h
+
+;; FUNCTION - removes leading whitespace by rewriting to a separate buffer.
+;; si => source buffer, ASCIIZ
+;; di => target buffer, preferably zeroes.
+rem_lead_spaces:
+    xor ax, ax
+    ;jmp .rewrite  ; Debugging purposes only.
+
+    .loop_on_space:
+        mov al, [si]
+        inc si
+
+        cmp al, CH_SP
+
+        jne .prerewrite
+        jmp .loop_on_space
+
+    .prerewrite
+        dec si
+    .rewrite:
+        mov al, [si]
+        inc si
+
+        ; Check what to do with the current character.
+        cmp al, CH_SP
+        je .rewrite
+
+        cmp al, 0x0
+        je .completed
+
+        ; All good, move to dest. buffer.
+        mov [di], al
+        inc di
+
+        jmp .rewrite
+
+    .completed:
+        ret
+
+;; FUNCTION - writes a line to stdout.
+;; ax => string to write.
+;;
+;; NOTE: Save all other registers as the function may use them.
+write_str:
+    mov bx, ax  ; Keep the addr of the string to be written in 'bx'.
+
+    mov ax, 0x0
+    mov cx, 0x0
+    mov dx, 0x0
+
+    mov ah, 0x2  ; This indicates that a single character will be written.
+
+    .loop:
+        mov cl, [bx]
+        cmp cl, 0
+
+        je .completed
+        mov dl, cl
+        int 0x21 ; Write char.
+        inc bx
+        jmp .loop
+
+    .completed:
+    ret
